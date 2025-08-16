@@ -388,7 +388,7 @@ const SchemaConfiguration: React.FC<SchemaConfigurationProps> = ({
 			const selectedIsActive = selectedFilters.includes("Selected")
 			const notSelectedIsActive = selectedFilters.includes("Not selected")
 
-			const streamIsSelected = isStreamSelected(
+			const isSelected = isStreamSelected(
 				stream.stream.name,
 				stream.stream.namespace || "",
 			)
@@ -400,12 +400,12 @@ const SchemaConfiguration: React.FC<SchemaConfigurationProps> = ({
 
 			// If only selected is active, show only selected streams
 			if (selectedIsActive && !notSelectedIsActive) {
-				return streamIsSelected
+				return isSelected
 			}
 
 			// If only not selected is active, show only unselected streams
 			if (!selectedIsActive && notSelectedIsActive) {
-				return !streamIsSelected
+				return !isSelected
 			}
 
 			// If neither is active, show all (shouldn't happen due to default "All tables")

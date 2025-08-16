@@ -360,43 +360,56 @@ const SchemaConfiguration: React.FC<SchemaConfigurationProps> = ({
 	}
 
 	const filteredStreams = useMemo(() => {
+		// Helper function to check if a stream is selected
+		const isStreamSelected = (
+			streamName: string,
+			namespace: string,
+		): boolean => {
+			return !!apiResponse?.selected_streams[namespace]?.some(
+				s => s.stream_name === streamName,
+			)
+		}
 		if (!apiResponse?.streams) return []
 		let tempFilteredStreams = [...apiResponse.streams]
 
+		// Search filter
 		if (searchText) {
 			tempFilteredStreams = tempFilteredStreams.filter(stream =>
 				stream.stream.name.toLowerCase().includes(searchText.toLowerCase()),
 			)
 		}
 
+		// Selection status filters
 		if (selectedFilters.includes("All tables")) {
 			return tempFilteredStreams
 		}
 
 		return tempFilteredStreams.filter(stream => {
-			const fullRefreshIsActive = selectedFilters.includes("Full Refresh")
-			const incrementalIsActive = selectedFilters.includes(
-				"Full Refresh + Incremental",
+			const selectedIsActive = selectedFilters.includes("Selected")
+			const notSelectedIsActive = selectedFilters.includes("Not selected")
+
+			const streamIsSelected = isStreamSelected(
+				stream.stream.name,
+				stream.stream.namespace || "",
 			)
-			const cdcIsActive = selectedFilters.includes("Full Refresh + CDC")
-			const strictCdcIsActive = selectedFilters.includes("CDC Only")
 
-			// Sync mode filtering
-			let passesSyncModeFilter = true
-			const activeSyncModeFilters = [
-				fullRefreshIsActive ? SyncMode.FULL_REFRESH : false,
-				incrementalIsActive ? SyncMode.INCREMENTAL : false,
-				cdcIsActive ? SyncMode.CDC : false,
-				strictCdcIsActive ? SyncMode.STRICT_CDC : false,
-			].filter((mode): mode is SyncMode => mode !== false)
-
-			if (activeSyncModeFilters.length > 0) {
-				passesSyncModeFilter = activeSyncModeFilters.includes(
-					stream.stream.sync_mode as SyncMode,
-				)
+			// If both selected and not selected are active, show all
+			if (selectedIsActive && notSelectedIsActive) {
+				return true
 			}
 
-			return passesSyncModeFilter
+			// If only selected is active, show only selected streams
+			if (selectedIsActive && !notSelectedIsActive) {
+				return streamIsSelected
+			}
+
+			// If only not selected is active, show only unselected streams
+			if (!selectedIsActive && notSelectedIsActive) {
+				return !streamIsSelected
+			}
+
+			// If neither is active, show all (shouldn't happen due to default "All tables")
+			return true
 		})
 	}, [apiResponse, searchText, selectedFilters])
 
@@ -410,13 +423,8 @@ const SchemaConfiguration: React.FC<SchemaConfigurationProps> = ({
 		return grouped
 	}, [filteredStreams])
 
-	const filters = [
-		"All tables",
-		"Full Refresh",
-		"Full Refresh + Incremental",
-		"Full Refresh + CDC",
-		"CDC Only",
-	]
+	// Updated filters array - removed sync mode filters, added selection filters
+	const filters = ["All tables", "Selected", "Not selected"]
 
 	useEffect(() => {
 		if (selectedFilters.length === 0) {

@@ -32,7 +32,7 @@ const JobCreation: React.FC = () => {
 	const initialData = location.state?.initialData || {}
 	const savedJobId = location.state?.savedJobId
 
-	const [currentStep, setCurrentStep] = useState<JobCreationSteps>("schema")
+	const [currentStep, setCurrentStep] = useState<JobCreationSteps>("source")
 	const [docsMinimized, setDocsMinimized] = useState(false)
 	const [sourceName, setSourceName] = useState(initialData.sourceName || "")
 	const [sourceConnector, setSourceConnector] = useState(
